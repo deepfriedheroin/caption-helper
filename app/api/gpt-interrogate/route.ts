@@ -27,7 +27,7 @@ async function downscaleImage(base64Image: string, maxSize: number): Promise<str
 
 export async function POST(req: Request) {
   try {
-    const { image, apiKey, customToken, customInstruction, inherentAttributes, currentCaption } = await req.json();
+    const { image, apiKey, customToken, customInstruction, inherentAttributes, currentCaption, overridePrompt } = await req.json();
 
     if (!apiKey) {
       throw new Error("OpenAI API key is missing");
@@ -35,14 +35,21 @@ export async function POST(req: Request) {
 
     const openai = new OpenAI({ apiKey });
 
-    let systemPrompt = `
+    let systemPrompt: string;
+
+    if (overridePrompt) {
+      // Use only the custom prompt provided by the user
+      systemPrompt = customInstruction || "Please provide a detailed caption for the image.";
+    } else {
+      // Use the existing system prompt logic
+      systemPrompt = `
 You are an AI assistant that captions images for training purposes. Your task is to create clear, detailed captions`;
 
-    if (customToken) {
-      systemPrompt += ` that incorporate the custom token "${customToken}" at the beginning.`;
-    }
+      if (customToken) {
+        systemPrompt += ` that incorporate the custom token "${customToken}" at the beginning.`;
+      }
 
-    systemPrompt += `
+      systemPrompt += `
 The following guide outlines the captioning approach:
 
 ### Captioning Principles:
@@ -70,17 +77,18 @@ The following guide outlines the captioning approach:
 Combine all of these to create a detailed caption for the image. Do not include any other text or formatting.
 `;
 
-    if (inherentAttributes) {
-      systemPrompt += `
+      if (inherentAttributes) {
+        systemPrompt += `
 ### Inherent Attributes to Avoid:
 ${inherentAttributes}
 `;
-    }
+      }
 
-    if (customInstruction) {
-      systemPrompt += `
+      if (customInstruction) {
+        systemPrompt += `
 ${customInstruction}
 `;
+      }
     }
 
     const downscaledImage = await downscaleImage(image, 1024);

@@ -8,6 +8,7 @@ import {
   Button,
   Input,
   Textarea,
+  Checkbox,  // Import Checkbox
 } from "@nextui-org/react";
 
 interface GptOptionsModalProps {
@@ -20,6 +21,7 @@ export interface GptOptions {
   customToken: string;
   customInstruction: string;
   inherentAttributes: string;
+  overridePrompt: boolean;  // Add overridePrompt to GptOptions interface
 }
 
 export default function GptOptionsModal({
@@ -30,23 +32,25 @@ export default function GptOptionsModal({
   const [customToken, setCustomToken] = useState("");
   const [customInstruction, setCustomInstruction] = useState("");
   const [inherentAttributes, setInherentAttributes] = useState("");
+  const [overridePrompt, setOverridePrompt] = useState(false);  // State for override toggle
 
   useEffect(() => {
     // Load saved options from localStorage
     const savedOptions = localStorage.getItem("gptOptions");
 
     if (savedOptions) {
-      const { customToken, customInstruction, inherentAttributes } =
+      const { customToken, customInstruction, inherentAttributes, overridePrompt } =
         JSON.parse(savedOptions);
 
       setCustomToken(customToken || "");
       setCustomInstruction(customInstruction || "");
       setInherentAttributes(inherentAttributes || "");
+      setOverridePrompt(overridePrompt || false);  // Load saved overridePrompt state
     }
   }, []);
 
   const handleApply = () => {
-    const options = { customToken, customInstruction, inherentAttributes };
+    const options = { customToken, customInstruction, inherentAttributes, overridePrompt };
 
     localStorage.setItem("gptOptions", JSON.stringify(options));
     onApply(options);
@@ -58,6 +62,12 @@ export default function GptOptionsModal({
       <ModalContent>
         <ModalHeader>GPT Captioning Options</ModalHeader>
         <ModalBody>
+          <Textarea
+            label="Inherent Attributes (Optional)"
+            placeholder="Enter inherent attributes to avoid"
+            value={inherentAttributes}
+            onChange={(e) => setInherentAttributes(e.target.value)}
+          />
           <Input
             label="Custom Token (Recommended but optional)"
             placeholder="Enter custom token"
@@ -70,12 +80,12 @@ export default function GptOptionsModal({
             value={customInstruction}
             onChange={(e) => setCustomInstruction(e.target.value)}
           />
-          <Textarea
-            label="Inherent Attributes (Optional)"
-            placeholder="Enter inherent attributes to avoid"
-            value={inherentAttributes}
-            onChange={(e) => setInherentAttributes(e.target.value)}
-          />
+          <Checkbox
+            isSelected={overridePrompt}
+            onChange={(e) => setOverridePrompt(e.target.checked)}  // Correctly handle the event
+          >
+            Override Base Prompt
+          </Checkbox>
         </ModalBody>
         <ModalFooter>
           <Button color="primary" onClick={handleApply}>

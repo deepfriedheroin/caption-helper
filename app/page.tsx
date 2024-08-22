@@ -38,6 +38,7 @@ export default function Home() {
     customToken: "",
     customInstruction: "",
     inherentAttributes: "",
+    overridePrompt: false, 
   });
   const [isLoading, setIsLoading] = useState({
     enhance: false,
